@@ -18,13 +18,22 @@ export default function Navbar({
       >
         AlmostSwine
       </Link>
-      <div>
+      <div className="flex flex-row gap-9 items-center">
         {showPredictionModes && (
-          <div>
-            <Link href="/predict/image">image</Link>
-            <Link href="/predict/video">video</Link>
-            <Link href="/predict/realtime">realtime</Link>
-          </div>
+          <>
+            <Link href="/predict/image" className="hover:underline font-bold">
+              Image prediction
+            </Link>
+            <Link href="/predict/video" className="hover:underline font-bold">
+              Video prediction
+            </Link>
+            <Link
+              href="/predict/realtime"
+              className="hover:underline  font-bold"
+            >
+              Realtime prediction
+            </Link>
+          </>
         )}
         {authenticated ? (
           <Link href="/logout">
