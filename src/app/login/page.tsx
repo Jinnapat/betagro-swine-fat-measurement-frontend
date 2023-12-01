@@ -10,9 +10,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+
   const router = useRouter();
   const login = () => {
-    router.push("mode_selection");
+    setErrorMessage("");
+    setIsProcessing(true);
+    // router.push("mode_selection");
   };
 
   return (
@@ -48,8 +53,18 @@ export default function LoginPage() {
             text="Login"
             colorClass="bg-purple-700"
             handler={login}
-            disabled={email == "" || password == ""}
+            disabled={email == "" || password == "" || isProcessing}
           />
+          <p className="text-red-600">{errorMessage}</p>
+          {isProcessing && (
+            <Image
+              src="/loading.png"
+              width={80}
+              height={80}
+              alt="loading"
+              className="absolute z-10 animate-spin"
+            />
+          )}
         </div>
       </LayoutWithWallpaper>
     </>
