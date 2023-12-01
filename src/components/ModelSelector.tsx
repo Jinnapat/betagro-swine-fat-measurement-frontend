@@ -51,8 +51,8 @@ export default function ModelSelector({
         </div>
         <div
           className={
-            "w-full transition-transform duration-300 origin-top h-0 translate-y-1" +
-            (showDropDown ? "" : " scale-y-0")
+            "w-full transition-all duration-300 origin-top h-0 translate-y-1" +
+            (showDropDown ? "" : " scale-y-0 opacity-0")
           }
         >
           <div className="flex flex-col gap-1 w-full z-50 relative bg-gray-500 rounded-lg">
