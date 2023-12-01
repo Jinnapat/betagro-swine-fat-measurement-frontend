@@ -46,7 +46,7 @@ export default function LoginPage() {
 
           <Button
             text="Login"
-            colorClass="purple-700"
+            colorClass="bg-purple-700"
             handler={login}
             disabled={email == "" || password == ""}
           />

@@ -1,4 +1,4 @@
-import LoginButton from "@/components/Button";
+import Button from "@/components/Button";
 import LayoutWithWallpaper from "@/components/LayoutWithWallpaper";
 import Navbar from "@/components/NavBar";
 import Link from "next/link";
@@ -30,7 +30,7 @@ export default function Home() {
           </p>
           <br></br>
           <Link href="/login">
-            <LoginButton text="Login" colorClass="purple-700" />
+            <Button text="Login" colorClass="bg-purple-700" />
           </Link>
           <br></br>
           <br></br>
