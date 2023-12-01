@@ -8,7 +8,7 @@ export default function PredictionLayout({
   return (
     <>
       <Navbar authenticated={true} showPredictionModes={true} />
-      <div className="pl-20 py-5 h-full">{children}</div>
+      <div className="pl-20 py-5 grow">{children}</div>
     </>
   );
 }
