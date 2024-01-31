@@ -21,11 +21,8 @@ export default function Navbar({
       <div className="flex flex-row gap-5 items-center">
         {showPredictionModes && (
           <>
-            <Link href="/predict/image" className="hover:underline font-bold">
-              Image prediction
-            </Link>
-            <Link href="/predict/video" className="hover:underline font-bold">
-              Video prediction
+            <Link href="/predict/uploadMedia" className="hover:underline font-bold">
+              Video/Images prediction
             </Link>
             <Link
               href="/predict/realtime"

@@ -81,7 +81,7 @@ export default function ModelSelector({
         />
         {onStopHandler && (
           <Button
-            text="stop"
+            text="Stop"
             colorClass="bg-red-400"
             handler={onStopHandler}
             disabled={stopButtonDisabled}
