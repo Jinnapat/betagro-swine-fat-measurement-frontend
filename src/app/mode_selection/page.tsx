@@ -15,12 +15,8 @@ export default function ModeSelectionPage() {
       <LayoutWithWallpaper>
         <div className="w-7/12 flex flex-col gap-4 p-20">
           <ModeSelectionButton
-            text="Image Prediction"
-            routeTo="/predict/image"
-          />
-          <ModeSelectionButton
-            text="Video Prediction"
-            routeTo="/predict/video"
+            text="Video/Images Prediction"
+            routeTo="/predict/uploadMedia"
           />
           <ModeSelectionButton
             text="Realtime Prediction"
