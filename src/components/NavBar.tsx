@@ -38,7 +38,7 @@ export default function Navbar() {
               Realtime prediction
             </Link>
             <Link href="/result" className="hover:underline font-bold">
-              Results
+              Result
             </Link>
           </>
         )}
