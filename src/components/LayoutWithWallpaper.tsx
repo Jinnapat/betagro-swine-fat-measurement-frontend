@@ -14,6 +14,7 @@ export default function LayoutWithWallpaper({ children }: Proptype) {
           fill
           alt="wallpaper"
           className="rounded-bl-3xl object-cover"
+          priority={true}
         />
       </div>
     </div>
