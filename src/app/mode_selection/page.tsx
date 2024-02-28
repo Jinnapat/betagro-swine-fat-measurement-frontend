@@ -1,5 +1,4 @@
 import LayoutWithWallpaper from "@/components/LayoutWithWallpaper";
-import Navbar from "@/components/NavBar";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -10,25 +9,16 @@ interface Proptype {
 
 export default function ModeSelectionPage() {
   return (
-    <>
-      <Navbar authenticated={true} showPredictionModes={false} />
-      <LayoutWithWallpaper>
-        <div className="w-7/12 flex flex-col gap-4 p-20">
-          <ModeSelectionButton
-            text="Image Prediction"
-            routeTo="/predict/image"
-          />
-          <ModeSelectionButton
-            text="Video Prediction"
-            routeTo="/predict/video"
-          />
-          <ModeSelectionButton
-            text="Realtime Prediction"
-            routeTo="/predict/realtime"
-          />
-        </div>
-      </LayoutWithWallpaper>
-    </>
+    <LayoutWithWallpaper>
+      <div className="w-7/12 flex flex-col gap-4 p-20">
+        <ModeSelectionButton text="Image Prediction" routeTo="/predict/image" />
+        <ModeSelectionButton text="Video Prediction" routeTo="/predict/video" />
+        <ModeSelectionButton
+          text="Realtime Prediction"
+          routeTo="/predict/realtime"
+        />
+      </div>
+    </LayoutWithWallpaper>
   );
 }
 

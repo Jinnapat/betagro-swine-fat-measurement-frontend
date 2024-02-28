@@ -5,10 +5,5 @@ export default function PredictionLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      <Navbar authenticated={true} showPredictionModes={true} />
-      <div className="pl-20 py-5 grow">{children}</div>
-    </>
-  );
+  return <div className="pl-20 py-5 grow">{children}</div>;
 }
