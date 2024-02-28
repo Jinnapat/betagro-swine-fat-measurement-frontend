@@ -1,9 +1,16 @@
+"use client";
+
 import Button from "@/components/Button";
 import LayoutWithWallpaper from "@/components/LayoutWithWallpaper";
 import Navbar from "@/components/NavBar";
+import UserAuthorizationGuard from "@/components/UnauthorizedUserGuard";
+import { UserState } from "@/store/userStore";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function Home() {
+  const [userStore, setUserStore] = useState<UserState | undefined>(undefined);
+
   const statistics = [
     { name: "Model Version", value: "12" },
     { name: "Training Image", value: "42069+" },
@@ -11,8 +18,11 @@ export default function Home() {
   ];
 
   return (
-    <>
-      <Navbar authenticated={false} showPredictionModes={false} />
+    <UserAuthorizationGuard
+      setUserStore={setUserStore}
+      needAuthorized={false}
+      needUnauthorized={false}
+    >
       <LayoutWithWallpaper>
         <div className="w-7/12 pl-20">
           <div className="bg-gray-200 rounded-lg p-2 w-fit">Hello There 🐷</div>
@@ -29,9 +39,11 @@ export default function Home() {
             lectus, sed mattis lectus odio at odio.
           </p>
           <br></br>
-          <Link href="/login">
-            <Button text="Login" colorClass="bg-purple-700" />
-          </Link>
+          {userStore && userStore.accessToken.length === 0 && (
+            <Link href="/login">
+              <Button text="Login" colorClass="bg-purple-700" />
+            </Link>
+          )}
           <br></br>
           <br></br>
           <br></br>
@@ -45,6 +57,6 @@ export default function Home() {
           </div>
         </div>
       </LayoutWithWallpaper>
-    </>
+    </UserAuthorizationGuard>
   );
 }
