@@ -1,25 +1,54 @@
 "use client";
+
 import { useState } from "react";
 import Button from "@/components/Button";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import LayoutWithWallpaper from "@/components/LayoutWithWallpaper";
 import Navbar from "@/components/NavBar";
+import { useUserStore } from "@/store/userStore";
+import { useStore } from "@/store/useStore";
+import PageLoading from "@/components/PageLoading";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const userStore = useStore(useUserStore, (state) => state);
 
-  const router = useRouter();
-  const login = () => {
+  const login = async () => {
+    if (!userStore) return;
     setErrorMessage("");
     setIsProcessing(true);
-    // router.push("mode_selection");
+    const loginResult = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_ROOT}/auth/login`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      }
+    );
+    if (loginResult.status != 200) {
+      const errorJson = await loginResult.json();
+      setErrorMessage(errorJson.detail);
+      setIsProcessing(false);
+      return;
+    }
+    const responseJson = await loginResult.json();
+    userStore.setAccessToken(responseJson.access_token);
+    router.push("mode_selection");
   };
 
+  if (!userStore) return <PageLoading />;
+  if (userStore.accessToken.length > 0) {
+    router.push("/mode_selection");
+    return <PageLoading />;
+  }
   return (
     <>
       <Navbar authenticated={false} showPredictionModes={false} />
