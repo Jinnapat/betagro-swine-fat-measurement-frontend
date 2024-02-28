@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type UserState = {
+export type UserState = {
   accessToken: string;
   setAccessToken: (accessToken: string) => void;
 };
