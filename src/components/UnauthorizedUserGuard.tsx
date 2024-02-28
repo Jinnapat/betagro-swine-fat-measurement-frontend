@@ -6,18 +6,18 @@ import { useRouter } from "next/navigation";
 
 export default function UserAuthorizationGuard({
   children,
-  setUserStore,
   needAuthorized,
   needUnauthorized,
+  setUserStore,
 }: {
   children: JSX.Element;
-  setUserStore: Dispatch<SetStateAction<UserState | undefined>>;
   needAuthorized: boolean;
   needUnauthorized: boolean;
+  setUserStore?: Dispatch<SetStateAction<UserState | undefined>>;
 }) {
   const router = useRouter();
   const userStore = useStore(useUserStore, (state) => state);
-  setUserStore(userStore);
+  if (setUserStore) setUserStore(userStore);
   if (!userStore) return <PageLoading />;
   if (
     (needAuthorized && userStore.accessToken.length === 0) ||
