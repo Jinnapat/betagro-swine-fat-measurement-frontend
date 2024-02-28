@@ -1,7 +1,6 @@
 "use client";
 
 import Button from "@/components/Button";
-import Navbar from "@/components/NavBar";
 import { Dispatch, SetStateAction, useState } from "react";
 
 export default function ResultPage() {
@@ -23,26 +22,23 @@ export default function ResultPage() {
   };
 
   return (
-    <>
-      <Navbar authenticated={true} showPredictionModes={true} />
-      <div className="flex flex-col justify-center items-center p-8">
-        <div className="bg-gray-100 rounded-xl w-full p-8 max-w-4xl flex flex-col gap-4 items-center">
-          <h1 className="font-bold text-3xl">Download recorded predictions</h1>
-          <DatetimeSelector
-            text="Start"
-            datetimeUpdateHandler={setStartDatetime}
-          />
-          <DatetimeSelector text="End" datetimeUpdateHandler={setEndDatetime} />
-          <Button
-            text="Download"
-            colorClass="bg-purple-700"
-            disabled={startDatetime == "" || endDatetime == ""}
-            handler={downloadResults}
-          />
-          <p className="text-red-700 text-center text-sm">{errorMessage}</p>
-        </div>
+    <div className="flex flex-col justify-center items-center p-8">
+      <div className="bg-gray-100 rounded-xl w-full p-8 max-w-4xl flex flex-col gap-4 items-center">
+        <h1 className="font-bold text-3xl">Download recorded predictions</h1>
+        <DatetimeSelector
+          text="Start"
+          datetimeUpdateHandler={setStartDatetime}
+        />
+        <DatetimeSelector text="End" datetimeUpdateHandler={setEndDatetime} />
+        <Button
+          text="Download"
+          colorClass="bg-purple-700"
+          disabled={startDatetime == "" || endDatetime == ""}
+          handler={downloadResults}
+        />
+        <p className="text-red-700 text-center text-sm">{errorMessage}</p>
       </div>
-    </>
+    </div>
   );
 }
 
