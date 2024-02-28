@@ -1,15 +1,19 @@
+"use client";
+
 import Link from "next/link";
 import Button from "./Button";
+import { useStore } from "@/store/useStore";
+import { useUserStore } from "@/store/userStore";
 
-interface Proptype {
-  authenticated: boolean;
-  showPredictionModes: boolean;
-}
+export default function Navbar() {
+  const userStore = useStore(useUserStore, (state) => state);
 
-export default function Navbar({
-  authenticated,
-  showPredictionModes,
-}: Proptype) {
+  const logout = () => {
+    if (!userStore) return;
+    userStore.setAccessToken("");
+  };
+
+  const authenticated = userStore && userStore.accessToken.length > 0;
   return (
     <div className="w-full border-b-gray-200 py-2 px-6 border-b-2 flex flex-row justify-between items-center">
       <Link
@@ -19,7 +23,7 @@ export default function Navbar({
         AlmostSwine
       </Link>
       <div className="flex flex-row gap-5 items-center">
-        {showPredictionModes && (
+        {userStore && authenticated && (
           <>
             <Link href="/predict/image" className="hover:underline font-bold">
               Image prediction
@@ -38,11 +42,10 @@ export default function Navbar({
             </Link>
           </>
         )}
-        {authenticated ? (
-          <Link href="/logout">
-            <Button text="Logout" colorClass="bg-red-700" />
-          </Link>
-        ) : (
+        {userStore && authenticated && (
+          <Button text="Logout" handler={logout} colorClass="bg-red-700" />
+        )}
+        {userStore && !authenticated && (
           <Link href="/login">
             <Button text="Login" colorClass="bg-purple-700" />
           </Link>
