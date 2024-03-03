@@ -1,6 +1,7 @@
 import LayoutWithWallpaper from "@/components/LayoutWithWallpaper";
 import Link from "next/link";
 import Image from "next/image";
+import UserAuthorizationGuard from "@/components/UnauthorizedUserGuard";
 
 interface Proptype {
   text: string;
@@ -9,16 +10,24 @@ interface Proptype {
 
 export default function ModeSelectionPage() {
   return (
-    <LayoutWithWallpaper>
-      <div className="w-7/12 flex flex-col gap-4 p-20">
-        <ModeSelectionButton text="Image Prediction" routeTo="/predict/image" />
-        <ModeSelectionButton text="Video Prediction" routeTo="/predict/video" />
-        <ModeSelectionButton
-          text="Realtime Prediction"
-          routeTo="/predict/realtime"
-        />
-      </div>
-    </LayoutWithWallpaper>
+    <UserAuthorizationGuard needAuthorized={true} needUnauthorized={false}>
+      <LayoutWithWallpaper>
+        <div className="w-7/12 flex flex-col gap-4 p-20">
+          <ModeSelectionButton
+            text="Image Prediction"
+            routeTo="/predict/image"
+          />
+          <ModeSelectionButton
+            text="Video Prediction"
+            routeTo="/predict/video"
+          />
+          <ModeSelectionButton
+            text="Realtime Prediction"
+            routeTo="/predict/realtime"
+          />
+        </div>
+      </LayoutWithWallpaper>
+    </UserAuthorizationGuard>
   );
 }
 
