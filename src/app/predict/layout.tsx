@@ -1,9 +1,15 @@
-import Navbar from "@/components/NavBar";
+"use client";
+
+import UserAuthorizationGuard from "@/components/UnauthorizedUserGuard";
 
 export default function PredictionLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="pl-20 py-5 grow">{children}</div>;
+  return (
+    <UserAuthorizationGuard needAuthorized={true} needUnauthorized={false}>
+      <div className="pl-20 py-5 grow">{children}</div>
+    </UserAuthorizationGuard>
+  );
 }

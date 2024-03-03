@@ -1,6 +1,6 @@
 import { Model } from "@/types/model";
 import Button from "./Button";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Image from "next/image";
 
 export default function ModelSelector({
@@ -10,6 +10,7 @@ export default function ModelSelector({
   setSelectedModel,
   startButtonDisabled,
   stopButtonDisabled,
+  customButton,
 }: {
   onStartHandler: (model: Model) => void;
   onStopHandler?: () => void;
@@ -17,20 +18,33 @@ export default function ModelSelector({
   setSelectedModel: Dispatch<SetStateAction<Model | undefined>>;
   startButtonDisabled?: boolean;
   stopButtonDisabled?: boolean;
+  customButton?: React.ReactNode;
 }) {
   const [showDropDown, setShowDropDown] = useState<boolean>(false);
 
-  const [listOfModels, setListOfModels] = useState<Model[] | undefined>([
-    { id: "1", name: "Main300.256.checkpoint" },
-    { id: "2", name: "Main300.516.checkpoint" },
-    { id: "3", name: "Main400.256.checkpoint" },
-    { id: "4", name: "Main500.1024.checkpoint" },
-  ]);
+  const [listOfModels, setListOfModels] = useState<Model[] | undefined>(
+    undefined
+  );
 
   const predict = () => {
     if (!selectedModel) return;
     onStartHandler(selectedModel);
   };
+
+  useEffect(() => {
+    const getAllModels = async () => {
+      const getAllModelsResult = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_ROOT}/models?page=1&size=10`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: {},
+        }
+      );
+    };
+  }, []);
 
   return (
     <div className="flex flex-row justify-between py-4 px-12 bg-gray-200 rounded-l-2xl items-center">
@@ -73,6 +87,7 @@ export default function ModelSelector({
         </div>
       </div>
       <div className="flex flex-row gap-2">
+        {customButton}
         <Button
           text="Predict"
           colorClass="bg-green-400"

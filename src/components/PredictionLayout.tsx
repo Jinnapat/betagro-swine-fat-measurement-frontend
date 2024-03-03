@@ -11,6 +11,7 @@ export default function PredictionLayout({
   setSelectedModel,
   startButtonDisabled,
   stopButtonDisabled,
+  customButton,
 }: {
   onStartHandler: () => void;
   onStopHandler?: () => void;
@@ -20,6 +21,7 @@ export default function PredictionLayout({
   setSelectedModel: Dispatch<SetStateAction<Model | undefined>>;
   startButtonDisabled?: boolean;
   stopButtonDisabled?: boolean;
+  customButton?: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col bg-gray-100 h-full rounded-l-2xl">
@@ -30,6 +32,7 @@ export default function PredictionLayout({
         setSelectedModel={setSelectedModel}
         startButtonDisabled={startButtonDisabled}
         stopButtonDisabled={stopButtonDisabled}
+        customButton={customButton}
       />
       <div className="bg-purple-700 text-white p-3 pl-12 rounded-l-2xl">
         {inputDescriptionText}
