@@ -1,3 +1,5 @@
+"use client";
+
 import LayoutWithWallpaper from "@/components/LayoutWithWallpaper";
 import Link from "next/link";
 import Image from "next/image";
