@@ -8,16 +8,13 @@ export default function UserAuthorizationGuard({
   children,
   needAuthorized,
   needUnauthorized,
-  setUserStore,
 }: {
   children: JSX.Element;
   needAuthorized: boolean;
   needUnauthorized: boolean;
-  setUserStore?: Dispatch<SetStateAction<UserState | undefined>>;
 }) {
   const router = useRouter();
   const userStore = useStore(useUserStore, (state) => state);
-  if (setUserStore) setUserStore(userStore);
   if (!userStore) return <PageLoading />;
   if (
     (needAuthorized && userStore.accessToken.length === 0) ||

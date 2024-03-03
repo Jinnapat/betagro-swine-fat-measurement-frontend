@@ -4,13 +4,16 @@ import Link from "next/link";
 import Button from "./Button";
 import { useStore } from "@/store/useStore";
 import { useUserStore } from "@/store/userStore";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
+  const router = useRouter();
   const userStore = useStore(useUserStore, (state) => state);
 
   const logout = () => {
     if (!userStore) return;
     userStore.setAccessToken("");
+    router.push("/");
   };
 
   const authenticated = userStore && userStore.accessToken.length > 0;

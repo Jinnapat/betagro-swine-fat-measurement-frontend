@@ -2,14 +2,13 @@
 
 import Button from "@/components/Button";
 import LayoutWithWallpaper from "@/components/LayoutWithWallpaper";
-import Navbar from "@/components/NavBar";
 import UserAuthorizationGuard from "@/components/UnauthorizedUserGuard";
-import { UserState } from "@/store/userStore";
+import { useStore } from "@/store/useStore";
+import { useUserStore } from "@/store/userStore";
 import Link from "next/link";
-import { useState } from "react";
 
 export default function Home() {
-  const [userStore, setUserStore] = useState<UserState | undefined>(undefined);
+  const userStore = useStore(useUserStore, (state) => state);
 
   const statistics = [
     { name: "Model Version", value: "12" },
@@ -18,11 +17,7 @@ export default function Home() {
   ];
 
   return (
-    <UserAuthorizationGuard
-      setUserStore={setUserStore}
-      needAuthorized={false}
-      needUnauthorized={false}
-    >
+    <UserAuthorizationGuard needAuthorized={false} needUnauthorized={false}>
       <LayoutWithWallpaper>
         <div className="w-7/12 pl-20">
           <div className="bg-gray-200 rounded-lg p-2 w-fit">Hello There 🐷</div>
