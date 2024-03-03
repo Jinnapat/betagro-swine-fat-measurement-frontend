@@ -4,19 +4,19 @@ import { useState } from "react";
 import Button from "@/components/Button";
 import Image from "next/image";
 import LayoutWithWallpaper from "@/components/LayoutWithWallpaper";
-import Navbar from "@/components/NavBar";
 import { useRouter } from "next/navigation";
 import UserAuthorizationGuard from "@/components/UnauthorizedUserGuard";
-import { UserState } from "@/store/userStore";
+import { useUserStore } from "@/store/userStore";
+import { useStore } from "@/store/useStore";
 
 export default function LoginPage() {
+  const userStore = useStore(useUserStore, (state) => state);
   const router = useRouter();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [userStore, setUserStore] = useState<UserState | undefined>(undefined);
 
   const login = async () => {
     if (!userStore) return;
@@ -44,11 +44,7 @@ export default function LoginPage() {
   };
 
   return (
-    <UserAuthorizationGuard
-      setUserStore={setUserStore}
-      needAuthorized={false}
-      needUnauthorized={true}
-    >
+    <UserAuthorizationGuard needAuthorized={false} needUnauthorized={true}>
       <LayoutWithWallpaper>
         <div className="flex flex-col w-7/12 p-20 justify-center items-center gap-4">
           <p className="w-full">Login to AlmostSwine</p>
