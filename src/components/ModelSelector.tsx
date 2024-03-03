@@ -2,6 +2,16 @@ import { Model } from "@/types/model";
 import Button from "./Button";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Image from "next/image";
+import { useStore } from "@/store/useStore";
+import { useUserStore } from "@/store/userStore";
+
+type GetModelResponse = {
+  page_number: number;
+  page_size: number;
+  last_page: number;
+  count: number;
+  models: Model[];
+};
 
 export default function ModelSelector({
   onStartHandler,
@@ -20,6 +30,7 @@ export default function ModelSelector({
   stopButtonDisabled?: boolean;
   customButton?: React.ReactNode;
 }) {
+  const access_token = useStore(useUserStore, (state) => state.accessToken);
   const [showDropDown, setShowDropDown] = useState<boolean>(false);
 
   const [listOfModels, setListOfModels] = useState<Model[] | undefined>(
@@ -32,6 +43,7 @@ export default function ModelSelector({
   };
 
   useEffect(() => {
+    if (!access_token) return;
     const getAllModels = async () => {
       const getAllModelsResult = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_API_ROOT}/models?page=1&size=10`,
@@ -39,12 +51,15 @@ export default function ModelSelector({
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${access_token}`,
           },
-          body: {},
         }
       );
+      const jsonResponse: GetModelResponse = await getAllModelsResult.json();
+      setListOfModels(jsonResponse.models);
     };
-  }, []);
+    getAllModels();
+  }, [access_token]);
 
   return (
     <div className="flex flex-row justify-between py-4 px-12 bg-gray-200 rounded-l-2xl items-center">
@@ -73,7 +88,7 @@ export default function ModelSelector({
             {listOfModels &&
               listOfModels.map((model) => (
                 <button
-                  key={model.id}
+                  key={model.name}
                   className="z-50 rounded-lg p-3 hover:bg-black text-white"
                   onClick={() => {
                     setShowDropDown(false);

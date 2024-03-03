@@ -1,4 +1,5 @@
 export type Model = {
-  id: string;
   name: string;
+  version: string;
+  source_ref: string;
 };
