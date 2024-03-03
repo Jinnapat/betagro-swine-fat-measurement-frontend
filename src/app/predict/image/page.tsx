@@ -1,7 +1,6 @@
 "use client";
 
 import PredictionLayout from "@/components/PredictionLayout";
-import SquareIconButton from "@/components/SquareIconButton";
 import { Model } from "@/types/model";
 import { ChangeEventHandler, useRef, useState } from "react";
 import Image from "next/image";
