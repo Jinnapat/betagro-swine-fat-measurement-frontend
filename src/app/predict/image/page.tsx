@@ -5,13 +5,47 @@ import { Model } from "@/types/model";
 import { ChangeEventHandler, useRef, useState } from "react";
 import Image from "next/image";
 import Button from "@/components/Button";
+import { useStore } from "@/store/useStore";
+import { useUserStore } from "@/store/userStore";
+
+type CreateTasksResponse = {
+  tid: string;
+  name: string;
+  uid: string;
+  m_name: string;
+  create_at: string;
+  start_time: null;
+  finish_time: null;
+  task_type: string;
+  status: string;
+  number_of_input: number;
+  processed: number;
+  input_list: {
+    index: number;
+    source_ref: string;
+  }[];
+};
+
+const toBase64 = (file: File) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+  });
 
 export default function ImagePredictionPage() {
+  const accessToken = useStore(useUserStore, (state) => state.accessToken);
   const [inputImages, setInputImages] = useState<File[]>([]);
   const [inputImageUrls, setInputImageUrls] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState<Model | undefined>(
     undefined
   );
+  const [uploadedCount, setUploadedCount] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [uploadMessage, setUploadMessage] = useState<string>("");
+
   const inputElementRef = useRef<HTMLInputElement>(null);
 
   const openFileDialog = () => {
@@ -21,6 +55,8 @@ export default function ImagePredictionPage() {
 
   const handleFileChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     e.preventDefault();
+    setErrorMessage("");
+    setUploadMessage("");
     const files = e.currentTarget.files;
     if (!files) return;
     setInputImages([...inputImages, ...Object.values(files)]);
@@ -31,11 +67,95 @@ export default function ImagePredictionPage() {
   };
 
   const removeImage = (targetIdx: number) => {
+    setErrorMessage("");
+    setUploadMessage("");
     setInputImages(inputImages.filter((_, idx) => idx !== targetIdx));
     setInputImageUrls(inputImageUrls.filter((_, idx) => idx !== targetIdx));
   };
 
-  const predictBatchImage = async () => {};
+  const createTask = async () => {
+    if (!accessToken || !selectedModel) return;
+    const createTaskResult = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_ROOT}/tasks`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          name: `Batch prediction at ${new Date().toLocaleDateString()}`,
+          task_type: "batch",
+          m_name: selectedModel.name,
+          input_list: [],
+        }),
+      }
+    );
+    if (createTaskResult.status != 200) {
+      throw new Error("Can't create the task");
+    }
+    return await createTaskResult.json();
+  };
+
+  const uploadImage = async (taskId: string, image: File) => {
+    if (!accessToken) return;
+    const imageBase64 = await toBase64(image);
+    const uploadImageResult = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_ROOT}/tasks/${taskId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          input_to_add: [imageBase64],
+        }),
+      }
+    );
+    if (uploadImageResult.status != 200) {
+      throw new Error(`Can't upload the image: ${image.name}`);
+    }
+  };
+
+  const startTask = async (taskId: string) => {
+    if (!accessToken) return;
+    const startResult = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_ROOT}/tasks/${taskId}/start`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    if (startResult.status != 200) {
+      throw new Error("Can't start the task");
+    }
+    return await startResult.json();
+  };
+
+  const predictBatchImage = async () => {
+    if (!accessToken || !selectedModel) return;
+    setIsUploading(true);
+    setErrorMessage("");
+    setUploadMessage("");
+    setUploadedCount(0);
+    try {
+      const createTaskResult: CreateTasksResponse = await createTask();
+      for (let imageIdx = 0; imageIdx < inputImages.length; imageIdx += 1) {
+        await uploadImage(createTaskResult.tid, inputImages[imageIdx]);
+        setUploadedCount(imageIdx);
+        setUploadMessage(`${uploadedCount}/${inputImages.length} uploaded`);
+      }
+      await startTask(createTaskResult.tid);
+    } catch (err: any) {
+      setErrorMessage(err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <PredictionLayout
@@ -43,7 +163,9 @@ export default function ImagePredictionPage() {
       onStartHandler={predictBatchImage}
       selectedModel={selectedModel}
       setSelectedModel={setSelectedModel}
-      startButtonDisabled={!selectedModel}
+      startButtonDisabled={
+        !selectedModel || inputImages.length === 0 || isUploading
+      }
       customButton={
         <Button
           text="Add image"
@@ -52,6 +174,8 @@ export default function ImagePredictionPage() {
         />
       }
     >
+      <p className="text-center font-bold">{uploadMessage}</p>
+      <p className="text-red-600 text-center font-bold">{errorMessage}</p>
       <div className="w-full h-full flex flex-row justify-center gap-5 items-center">
         <input
           type="file"
