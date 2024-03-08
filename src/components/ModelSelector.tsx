@@ -30,12 +30,13 @@ export default function ModelSelector({
   stopButtonDisabled?: boolean;
   customButton?: React.ReactNode;
 }) {
-  const access_token = useStore(useUserStore, (state) => state.accessToken);
+  const userStore = useStore(useUserStore, (state) => state);
   const [showDropDown, setShowDropDown] = useState<boolean>(false);
-
   const [listOfModels, setListOfModels] = useState<Model[] | undefined>(
     undefined
   );
+
+  const access_token = userStore?.accessToken;
 
   const predict = () => {
     if (!selectedModel) return;
@@ -55,11 +56,15 @@ export default function ModelSelector({
           },
         }
       );
+      if (getAllModelsResult.status == 401) {
+        userStore.setAccessToken("");
+        throw new Error("No session");
+      }
       const jsonResponse: GetModelResponse = await getAllModelsResult.json();
       setListOfModels(jsonResponse.models);
     };
     getAllModels();
-  }, [access_token]);
+  }, [userStore, access_token]);
 
   return (
     <div className="flex flex-row justify-between py-4 px-12 bg-gray-200 rounded-l-2xl items-center">

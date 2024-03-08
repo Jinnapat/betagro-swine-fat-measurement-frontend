@@ -35,7 +35,7 @@ const toBase64 = (file: File) =>
   });
 
 export default function ImagePredictionPage() {
-  const accessToken = useStore(useUserStore, (state) => state.accessToken);
+  const userStore = useStore(useUserStore, (state) => state);
   const [inputImages, setInputImages] = useState<File[]>([]);
   const [inputImageUrls, setInputImageUrls] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState<Model | undefined>(
@@ -47,6 +47,7 @@ export default function ImagePredictionPage() {
   const [uploadMessage, setUploadMessage] = useState<string>("");
 
   const inputElementRef = useRef<HTMLInputElement>(null);
+  const accessToken = userStore?.accessToken;
 
   const openFileDialog = () => {
     if (!inputElementRef.current) return;
@@ -91,6 +92,10 @@ export default function ImagePredictionPage() {
         }),
       }
     );
+    if (createTaskResult.status == 401) {
+      userStore.setAccessToken("");
+      throw new Error("No session");
+    }
     if (createTaskResult.status != 200) {
       throw new Error("Can't create the task");
     }
@@ -113,6 +118,10 @@ export default function ImagePredictionPage() {
         }),
       }
     );
+    if (uploadImageResult.status == 401) {
+      userStore.setAccessToken("");
+      throw new Error("No session");
+    }
     if (uploadImageResult.status != 200) {
       throw new Error(`Can't upload the image: ${image.name}`);
     }
@@ -130,6 +139,10 @@ export default function ImagePredictionPage() {
         },
       }
     );
+    if (startResult.status == 401) {
+      userStore.setAccessToken("");
+      throw new Error("No session");
+    }
     if (startResult.status != 200) {
       throw new Error("Can't start the task");
     }
