@@ -41,7 +41,6 @@ export default function ImagePredictionPage() {
   const [selectedModel, setSelectedModel] = useState<Model | undefined>(
     undefined
   );
-  const [uploadedCount, setUploadedCount] = useState<number>(0);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [uploadMessage, setUploadMessage] = useState<string>("");
@@ -76,6 +75,7 @@ export default function ImagePredictionPage() {
 
   const createTask = async () => {
     if (!accessToken || !selectedModel) return;
+    const imageBase64 = await toBase64(inputImages[0]);
     const createTaskResult = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_API_ROOT}/tasks`,
       {
@@ -88,7 +88,7 @@ export default function ImagePredictionPage() {
           name: `Batch prediction at ${new Date().toLocaleDateString()}`,
           task_type: "batch",
           m_name: selectedModel.name,
-          input_list: [],
+          input_list: [imageBase64],
         }),
       }
     );
@@ -129,6 +129,7 @@ export default function ImagePredictionPage() {
 
   const startTask = async (taskId: string) => {
     if (!accessToken) return;
+    const imageBase64 = await toBase64(inputImages[0]);
     const startResult = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_API_ROOT}/tasks/${taskId}/start`,
       {
@@ -153,14 +154,13 @@ export default function ImagePredictionPage() {
     if (!accessToken || !selectedModel) return;
     setIsUploading(true);
     setErrorMessage("");
-    setUploadMessage("");
-    setUploadedCount(0);
+    setUploadMessage(`0/${inputImages.length} uploaded`);
     try {
       const createTaskResult: CreateTasksResponse = await createTask();
-      for (let imageIdx = 0; imageIdx < inputImages.length; imageIdx += 1) {
+      setUploadMessage(`1/${inputImages.length} uploaded`);
+      for (let imageIdx = 1; imageIdx < inputImages.length; imageIdx += 1) {
         await uploadImage(createTaskResult.tid, inputImages[imageIdx]);
-        setUploadedCount(imageIdx);
-        setUploadMessage(`${uploadedCount}/${inputImages.length} uploaded`);
+        setUploadMessage(`${imageIdx + 1}/${inputImages.length} uploaded`);
       }
       await startTask(createTaskResult.tid);
     } catch (err: any) {
