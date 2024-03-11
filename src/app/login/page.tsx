@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@/components/Button";
 import Image from "next/image";
 import LayoutWithWallpaper from "@/components/LayoutWithWallpaper";
@@ -40,7 +40,7 @@ export default function LoginPage() {
     }
     const responseJson = await loginResult.json();
     userStore.setAccessToken(responseJson.access_token);
-    router.push("mode_selection");
+    router.push("/mode_selection");
   };
 
   return (
