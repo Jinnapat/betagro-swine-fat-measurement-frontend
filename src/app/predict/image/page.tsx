@@ -163,6 +163,7 @@ export default function ImagePredictionPage() {
         setUploadMessage(`${imageIdx + 1}/${inputImages.length} uploaded`);
       }
       await startTask(createTaskResult.tid);
+      setUploadMessage(`${uploadMessage}: Prediction started.`);
     } catch (err: any) {
       setErrorMessage(err.message);
     } finally {
