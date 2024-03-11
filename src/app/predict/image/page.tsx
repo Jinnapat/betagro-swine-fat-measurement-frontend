@@ -155,15 +155,18 @@ export default function ImagePredictionPage() {
     setIsUploading(true);
     setErrorMessage("");
     setUploadMessage(`0/${inputImages.length} uploaded`);
+    let message = "";
     try {
       const createTaskResult: CreateTasksResponse = await createTask();
       setUploadMessage(`1/${inputImages.length} uploaded`);
       for (let imageIdx = 1; imageIdx < inputImages.length; imageIdx += 1) {
         await uploadImage(createTaskResult.tid, inputImages[imageIdx]);
-        setUploadMessage(`${imageIdx + 1}/${inputImages.length} uploaded`);
+        message = `${imageIdx + 1}/${inputImages.length} uploaded`;
+        setUploadMessage(message);
       }
       await startTask(createTaskResult.tid);
-      setUploadMessage(`${uploadMessage}: Prediction started.`);
+      message += " : Prediction started.";
+      setUploadMessage(message);
     } catch (err: any) {
       setErrorMessage(err.message);
     } finally {
