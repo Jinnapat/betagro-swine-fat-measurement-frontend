@@ -2,6 +2,7 @@
 
 import PageLoading from "@/components/PageLoading";
 import UserAuthorizationGuard from "@/components/UnauthorizedUserGuard";
+import { formatDate } from "@/helper/formatDate";
 import { useStore } from "@/store/useStore";
 import { useUserStore } from "@/store/userStore";
 import Link from "next/link";
@@ -102,7 +103,9 @@ const TaskList = ({ tasks }: { tasks: Task[] }) => {
               <Link href={`/result/${task.tid}`}>{task.name}</Link>
             </td>
             <td className="border border-purple-600 p-2">{task.task_type}</td>
-            <td className="border border-purple-600 p-2">{task.create_at}</td>
+            <td className="border border-purple-600 p-2">
+              {formatDate(task.create_at)}
+            </td>
             <td className="border border-purple-600 p-2">{task.status}</td>
           </tr>
         ))}

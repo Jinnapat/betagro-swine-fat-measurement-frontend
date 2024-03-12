@@ -85,7 +85,7 @@ export default function ImagePredictionPage() {
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          name: `Batch prediction at ${new Date().toLocaleDateString()}`,
+          name: `Batch prediction on ${new Date().toLocaleDateString()}`,
           task_type: "batch",
           m_name: selectedModel.name,
           input_list: [imageBase64],
