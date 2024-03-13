@@ -129,7 +129,6 @@ export default function ImagePredictionPage() {
 
   const startTask = async (taskId: string) => {
     if (!accessToken) return;
-    const imageBase64 = await toBase64(inputImages[0]);
     const startResult = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_API_ROOT}/tasks/${taskId}/start`,
       {
@@ -158,7 +157,7 @@ export default function ImagePredictionPage() {
     let message = "";
     try {
       const createTaskResult: CreateTasksResponse = await createTask();
-      setUploadMessage(`1/${inputImages.length} uploaded`);
+      message = `1/${inputImages.length} uploaded`;
       for (let imageIdx = 1; imageIdx < inputImages.length; imageIdx += 1) {
         await uploadImage(createTaskResult.tid, inputImages[imageIdx]);
         message = `${imageIdx + 1}/${inputImages.length} uploaded`;
