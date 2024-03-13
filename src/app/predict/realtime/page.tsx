@@ -3,7 +3,7 @@
 import PredictionLayout from "@/components/PredictionLayout";
 import SquareIconButton from "@/components/SquareIconButton";
 import { Model } from "@/types/model";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function RealtimePredictionPage() {
   const [camOpened, setCamOpened] = useState<boolean>(false);
@@ -15,13 +15,35 @@ export default function RealtimePredictionPage() {
     undefined
   );
 
-  const getStream = async () => {
-    return await navigator.mediaDevices.getUserMedia({ video: true });
-  };
+  const canvasRef = useRef<HTMLCanvasElement>();
+  const ctxRef = useRef<CanvasRenderingContext2D | null>();
+  const intervalRef = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    canvasRef.current = canvas;
+    ctxRef.current = context;
+  }, []);
+
+  useEffect(() => {
+    if (!videoStream) return;
+    const settings = videoStream.getTracks()[0].getSettings();
+    const width = settings.width as number;
+    const height = settings.height as number;
+
+    intervalRef.current = setInterval(() => {
+      if (!ctxRef.current || !canvasRef.current || !videoRef.current) return;
+      ctxRef.current.drawImage(videoRef.current, 0, 0, width, height);
+      var data = canvasRef.current.toDataURL("image/jpeg", 1);
+      ctxRef.current.clearRect(0, 0, width, height);
+      console.log(data);
+    }, 1000);
+  }, [videoStream]);
 
   const openCamera = async () => {
     setCamOpened(true);
-    const stream = await getStream();
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     setVideoStream(stream);
     if (!videoRef.current) return;
     videoRef.current.srcObject = stream;
@@ -30,6 +52,7 @@ export default function RealtimePredictionPage() {
 
   const closeCamera = () => {
     if (!videoStream) return;
+    clearInterval(intervalRef.current);
     videoStream.getTracks().forEach(function (track) {
       track.stop();
     });
