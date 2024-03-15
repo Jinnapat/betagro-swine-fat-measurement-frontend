@@ -5,6 +5,7 @@ import { Model } from "@/types/model";
 import { ChangeEventHandler, useRef, useState } from "react";
 import Image from "next/image";
 import Button from "@/components/Button";
+import { client } from "websocket";
 
 export default function VideoPredictionPage() {
   const [inputVideo, setVideo] = useState<File | null>(null);
@@ -12,6 +13,8 @@ export default function VideoPredictionPage() {
   const [selectedModel, setSelectedModel] = useState<Model | undefined>(
     undefined
   );
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+
   const inputElementRef = useRef<HTMLInputElement>(null);
 
   const openFileDialog = () => {
@@ -32,15 +35,25 @@ export default function VideoPredictionPage() {
     setInputVideoUrl(null);
   };
 
-  const predictBatchImage = async () => {};
+  const predictVideo = async () => {
+    if (!inputVideo) return;
+    setIsUploading(true);
+    // const myClient = new client();
+    // myClient.on("connect", (conn) => {
+    //   conn.se
+    // });
+    // myClient.connect(process.env.NEXT_PUBLIC_BACKEND_WS_ROOT as string);
+
+    setIsUploading(false);
+  };
 
   return (
     <PredictionLayout
       inputDescriptionText="Video"
-      onStartHandler={predictBatchImage}
+      onStartHandler={predictVideo}
       selectedModel={selectedModel}
       setSelectedModel={setSelectedModel}
-      startButtonDisabled={!selectedModel}
+      startButtonDisabled={!selectedModel || !inputVideo}
       customButton={
         <Button
           text="Add video"
