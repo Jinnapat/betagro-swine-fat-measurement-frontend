@@ -2,6 +2,8 @@
 
 import PredictionLayout from "@/components/PredictionLayout";
 import SquareIconButton from "@/components/SquareIconButton";
+import { useStore } from "@/store/useStore";
+import { useUserStore } from "@/store/userStore";
 import { Model } from "@/types/model";
 import { useEffect, useRef, useState } from "react";
 
@@ -16,30 +18,72 @@ export default function RealtimePredictionPage() {
   );
 
   const canvasRef = useRef<HTMLCanvasElement>();
+  const resultCanvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>();
   const intervalRef = useRef<NodeJS.Timeout>();
+  const userStore = useStore(useUserStore, (state) => state);
 
   useEffect(() => {
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    canvasRef.current = canvas;
-    ctxRef.current = context;
-  }, []);
-
-  useEffect(() => {
-    if (!videoStream) return;
+    if (!videoStream || !resultCanvasRef.current || !userStore) return;
     const settings = videoStream.getTracks()[0].getSettings();
     const width = settings.width as number;
     const height = settings.height as number;
 
-    intervalRef.current = setInterval(() => {
-      if (!ctxRef.current || !canvasRef.current || !videoRef.current) return;
-      ctxRef.current.drawImage(videoRef.current, 0, 0, width, height);
-      var data = canvasRef.current.toDataURL("image/jpeg", 1);
-      ctxRef.current.clearRect(0, 0, width, height);
-      console.log(data);
-    }, 1000);
-  }, [videoStream]);
+    const drawCanvas = document.createElement("canvas");
+    const drawContext = drawCanvas.getContext("2d");
+    const resultContext = resultCanvasRef.current.getContext("2d");
+
+    drawCanvas.width = width;
+    drawCanvas.height = height;
+    resultCanvasRef.current.width = width;
+    resultCanvasRef.current.height = height;
+
+    const client = new WebSocket(
+      process.env.NEXT_PUBLIC_BACKEND_WS_ROOT +
+        "?access_token=" +
+        userStore.accessToken
+    );
+
+    client.addEventListener("open", () => {
+      client.send("start");
+      intervalRef.current = setInterval(
+        () => sendFrame(width, height, client, drawContext, drawCanvas),
+        100
+      );
+    });
+
+    client.addEventListener("message", (ev) => {
+      const dataJson = JSON.parse(ev.data);
+      // addNewResult({});
+      displayOutput(dataJson.image as string, resultContext);
+    });
+  }, [videoStream, userStore]);
+
+  const sendFrame = (
+    width: number,
+    height: number,
+    client: WebSocket,
+    drawContext: CanvasRenderingContext2D | null,
+    drawCanvas: HTMLCanvasElement
+  ) => {
+    if (!drawContext || !resultCanvasRef.current || !videoRef.current) return;
+    drawContext.drawImage(videoRef.current, 0, 0, width, height);
+    var data = drawCanvas.toDataURL("image/jpeg", 1);
+    drawContext.clearRect(0, 0, width, height);
+    client.send(data);
+  };
+
+  const displayOutput = (
+    imageSrc: string,
+    resultContext: CanvasRenderingContext2D | null
+  ) => {
+    const image = new Image();
+    image.onload = () => {
+      if (!resultContext) return;
+      resultContext.drawImage(image, 0, 0);
+    };
+    image.src = imageSrc;
+  };
 
   const openCamera = async () => {
     setCamOpened(true);
@@ -71,6 +115,7 @@ export default function RealtimePredictionPage() {
       stopButtonDisabled={!camOpened}
     >
       <div className="w-full h-full flex flex-row justify-center gap-5 items-center">
+        <video ref={videoRef} hidden />
         <div className="flex flex-col justify-center items-center w-7/12 h-full bg-white border border-purple-700">
           {!camOpened && (
             <SquareIconButton
@@ -80,7 +125,7 @@ export default function RealtimePredictionPage() {
               disabled={!selectedModel}
             />
           )}
-          {camOpened && <video ref={videoRef} />}
+          {camOpened && <canvas ref={resultCanvasRef}></canvas>}
         </div>
         <div className="flex flex-col gap-2">
           <p>Swine no.: 1,209</p>
