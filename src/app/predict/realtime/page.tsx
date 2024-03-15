@@ -17,9 +17,7 @@ export default function RealtimePredictionPage() {
     undefined
   );
 
-  const canvasRef = useRef<HTMLCanvasElement>();
   const resultCanvasRef = useRef<HTMLCanvasElement>(null);
-  const ctxRef = useRef<CanvasRenderingContext2D | null>();
   const intervalRef = useRef<NodeJS.Timeout>();
   const userStore = useStore(useUserStore, (state) => state);
 
@@ -126,13 +124,6 @@ export default function RealtimePredictionPage() {
             />
           )}
           {camOpened && <canvas ref={resultCanvasRef}></canvas>}
-        </div>
-        <div className="flex flex-col gap-2">
-          <p>Swine no.: 1,209</p>
-          <p>PF1 : 3.0 cm</p>
-          <p>PF2 : 1.5 cm</p>
-          <p>FPS: 25/25</p>
-          <p>Timestamp : 31 oct 2023 23:59:59 </p>
         </div>
       </div>
     </PredictionLayout>
