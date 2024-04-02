@@ -8,6 +8,8 @@ import Button from "@/components/Button";
 import { useStore } from "@/store/useStore";
 import { useUserStore } from "@/store/userStore";
 
+const FRAME_WIDTH = 600;
+
 export default function VideoPredictionPage() {
   const [inputVideo, setVideo] = useState<File | null>(null);
   const [inputVideoUrl, setInputVideoUrl] = useState<string | null>(null);
@@ -59,13 +61,14 @@ export default function VideoPredictionPage() {
 
     drawCanvas.width = width;
     drawCanvas.height = height;
-    resultCanvasRef.current.width = width;
-    resultCanvasRef.current.height = height;
+
+    resultCanvasRef.current.width = FRAME_WIDTH;
+    resultCanvasRef.current.height = FRAME_WIDTH * (height / width);
 
     const client = new WebSocket(
       process.env.NEXT_PUBLIC_BACKEND_WS_ROOT +
-        "?access_token=" +
-        userStore.accessToken
+      "?access_token=" +
+      userStore.accessToken
     );
 
     client.addEventListener("open", () => {
@@ -78,7 +81,7 @@ export default function VideoPredictionPage() {
 
     client.addEventListener("message", (ev) => {
       const dataJson = JSON.parse(ev.data);
-      displayOutput(dataJson.image as string, resultContext);
+      displayOutput(dataJson.image as string, resultContext, width, height);
     });
 
     videoRef.current.addEventListener("ended", () => {
@@ -104,12 +107,24 @@ export default function VideoPredictionPage() {
 
   const displayOutput = (
     imageSrc: string,
-    resultContext: CanvasRenderingContext2D | null
+    resultContext: CanvasRenderingContext2D | null,
+    width: number,
+    height: number
   ) => {
     const image = new Image();
     image.onload = () => {
       if (!resultContext) return;
-      resultContext.drawImage(image, 0, 0);
+      resultContext.drawImage(
+        image,
+        0,
+        0,
+        width,
+        height,
+        0,
+        0,
+        FRAME_WIDTH,
+        FRAME_WIDTH * (height / width)
+      );
     };
     image.src = imageSrc;
   };
@@ -137,7 +152,12 @@ export default function VideoPredictionPage() {
           hidden
           onChange={handleFileChange}
         />
-        <div className="flex flex-row justify-center items-center w-full h-full bg-white border border-purple-700 gap-3 flex-wrap max-w-5xl">
+        <div
+          className={
+            "flex flex-row justify-center items-center w-full h-full bg-white border border-purple-700 gap-3 flex-wrap max-w-5xl" +
+            (isUploading ? " hidden" : "")
+          }
+        >
           {!inputVideoUrl && (
             <p className="font-bold text-center text-lg">
               No video selected yet
@@ -145,20 +165,18 @@ export default function VideoPredictionPage() {
           )}
           {inputVideoUrl && (
             <div className="border">
-              {!isUploading && (
-                <button className="w-8 h-8 relative" onClick={removeVideo}>
-                  <NextImage src="/close.png" alt="close" fill />
-                </button>
-              )}
-              <video
-                src={inputVideoUrl}
-                ref={videoRef}
-                controls
-                hidden={isUploading}
-              />
-              <canvas ref={resultCanvasRef} hidden={!isUploading}></canvas>
+              <button className="w-8 h-8 relative" onClick={removeVideo}>
+                <NextImage src="/close.png" alt="close" fill />
+              </button>
+              <video src={inputVideoUrl} ref={videoRef} controls />
             </div>
           )}
+        </div>
+        <div className="flex flex-col items-center">
+          {isUploading && (
+            <p className="font-bole text-center text-xl">is uploading...</p>
+          )}
+          <canvas ref={resultCanvasRef} hidden={!isUploading}></canvas>
         </div>
       </div>
     </PredictionLayout>
