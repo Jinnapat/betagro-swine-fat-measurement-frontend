@@ -48,6 +48,7 @@ export default function ResultPage() {
       );
       if (getTasksResult.status === 401) {
         userStore.setAccessToken("");
+        location.reload();
         return;
       }
       if (getTasksResult.status !== 200) {

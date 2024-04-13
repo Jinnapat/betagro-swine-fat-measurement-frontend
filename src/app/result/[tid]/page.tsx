@@ -70,6 +70,7 @@ export default function ResultInfoPage({
       );
       if (getTaskInfoResult.status === 401) {
         userStore.setAccessToken("");
+        location.reload();
         return;
       }
       if (getTaskInfoResult.status !== 200) {
@@ -98,6 +99,7 @@ export default function ResultInfoPage({
 
     if (response.status === 401) {
       userStore.setAccessToken("");
+      location.reload();
       return;
     }
 

@@ -4,6 +4,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Image from "next/image";
 import { useStore } from "@/store/useStore";
 import { useUserStore } from "@/store/userStore";
+import { router } from "websocket";
 
 type GetModelResponse = {
   page_number: number;
@@ -58,6 +59,7 @@ export default function ModelSelector({
       );
       if (getAllModelsResult.status == 401) {
         userStore.setAccessToken("");
+        location.reload();
         throw new Error("No session");
       }
       const jsonResponse: GetModelResponse = await getAllModelsResult.json();

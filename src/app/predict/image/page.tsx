@@ -94,6 +94,7 @@ export default function ImagePredictionPage() {
     );
     if (createTaskResult.status == 401) {
       userStore.setAccessToken("");
+      location.reload();
       throw new Error("No session");
     }
     if (createTaskResult.status != 200) {
@@ -120,6 +121,7 @@ export default function ImagePredictionPage() {
     );
     if (uploadImageResult.status == 401) {
       userStore.setAccessToken("");
+      location.reload();
       throw new Error("No session");
     }
     if (uploadImageResult.status != 200) {
@@ -141,6 +143,7 @@ export default function ImagePredictionPage() {
     );
     if (startResult.status == 401) {
       userStore.setAccessToken("");
+      location.reload();
       throw new Error("No session");
     }
     if (startResult.status != 200) {
