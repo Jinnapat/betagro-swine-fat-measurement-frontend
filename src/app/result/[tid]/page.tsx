@@ -73,7 +73,6 @@ export default function ResultInfoPage({
         return;
       }
       if (getTaskInfoResult.status !== 200) {
-        setErrorMessage("Cannot get task list");
         setIsGettingResult(false);
         return;
       }
