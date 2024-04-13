@@ -15,10 +15,18 @@ export default function UserAuthorizationGuard({
 }) {
   const router = useRouter();
   const userStore = useStore(useUserStore, (state) => state);
+  const [status, setStatus] = useState({ isLoading: true, isLoggedIn: false });
 
-  if (!userStore || !userStore._hasHydrated) return <PageLoading />;
-  const isLoggedIn = userStore.accessToken.length > 0;
-  if ((needAuthorized && !isLoggedIn) || (needUnauthorized && isLoggedIn)) {
+  useEffect(() => {
+    if (!userStore || !userStore._hasHydrated || !status.isLoading) return
+    setStatus({
+      isLoading: false,
+      isLoggedIn: userStore.accessToken.length > 0,
+    })
+  }, [userStore, status.isLoading])
+
+  if (status.isLoading) return <PageLoading />;
+  if ((needAuthorized && !status.isLoggedIn) || (needUnauthorized && status.isLoggedIn)) {
     return (
       <div className="flex flex-col items-center p-14 gap-4">
         <p className="font-bold text-center text-xl">Unauthorized access</p>
