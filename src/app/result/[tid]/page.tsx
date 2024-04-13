@@ -7,6 +7,8 @@ import { useUserStore } from "@/store/userStore";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { formatDate } from "@/helper/formatDate";
+import { usePathname } from "next/navigation";
+import { saveAs } from 'file-saver';
 
 type PredictionResult = {
   tid: string;
@@ -45,11 +47,12 @@ export default function ResultInfoPage({
 }: {
   params: { tid: string };
 }) {
+  const pathname = usePathname();
   const userStore = useStore(useUserStore, (state) => state);
   const [isGettingResult, setIsGettingResult] = useState<boolean>(true);
-  const [errorMessage, setErrorMessage] = useState<string>("");
   const [predictionResult, setPredictionResult] =
     useState<PredictionResult | null>(null);
+  const accessToken = userStore?.accessToken;
 
   useEffect(() => {
     if (!userStore) return;
@@ -65,7 +68,6 @@ export default function ResultInfoPage({
           },
         }
       );
-      console.log(getTaskInfoResult);
       if (getTaskInfoResult.status === 401) {
         userStore.setAccessToken("");
         return;
@@ -82,6 +84,28 @@ export default function ResultInfoPage({
     getTaskInfo();
   }, [userStore, params.tid]);
 
+  const downloadCSV = async () => {
+    const tid = pathname.split("/")[2];
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_ROOT}/results/${tid}/export/csv`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      alert("Cannot download the file.")
+      throw new Error('Failed to download file');
+    }
+
+    const filename = `${tid}-export.csv`
+    const blob = await response.blob();
+    saveAs(blob, filename);
+  }
+
   return (
     <UserAuthorizationGuard needAuthorized={true} needUnauthorized={false}>
       <>
@@ -91,8 +115,9 @@ export default function ResultInfoPage({
             <div className="pl-20 py-5 w-full">
               <div className="flex flex-col bg-gray-100 h-full rounded-l-2xl">
                 <TaskHead predictionResult={predictionResult} />
-                <div className="bg-purple-700 text-white p-3 pl-12 rounded-l-2xl">
-                  Result
+                <div className="bg-purple-700 text-white p-3 pl-12 pr-5 rounded-l-2xl flex flex-row justify-between items-center">
+                  <p>Result</p>
+                  <button className="bg-green-700 hover:bg-green-600 text-white transition-colors duration-300 py-2 px-4 rounded-md" onClick={downloadCSV}>export to csv</button>
                 </div>
                 <div className="h-full p-4">
                   <TaskInfoZone predictionResult={predictionResult} />
