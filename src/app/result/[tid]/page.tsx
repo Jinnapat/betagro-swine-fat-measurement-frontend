@@ -84,6 +84,7 @@ export default function ResultInfoPage({
   }, [userStore, params.tid]);
 
   const downloadCSV = async () => {
+    if (!userStore) return;
     const tid = pathname.split("/")[2];
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_API_ROOT}/results/${tid}/export/csv`,
@@ -94,6 +95,11 @@ export default function ResultInfoPage({
         },
       }
     );
+
+    if (response.status === 401) {
+      userStore.setAccessToken("");
+      return;
+    }
 
     if (!response.ok) {
       alert("Cannot download the file.")
