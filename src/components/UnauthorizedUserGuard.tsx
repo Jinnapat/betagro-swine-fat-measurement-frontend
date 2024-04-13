@@ -30,9 +30,16 @@ export default function UserAuthorizationGuard({
     return (
       <div className="flex flex-col items-center p-14 gap-4">
         <p className="font-bold text-center text-xl">Unauthorized access</p>
-        <button className="hover:underline" onClick={() => router.back()}>
-          Go back
-        </button>
+        <>
+          {status.isLoggedIn ?
+            (<button className="hover:underline" onClick={() => router.back()}>
+              Go back
+            </button>) :
+            (<button className="hover:underline" onClick={() => router.push("/login")}>
+              Go to login
+            </button>)
+          }
+        </>
       </div>
     );
   }
