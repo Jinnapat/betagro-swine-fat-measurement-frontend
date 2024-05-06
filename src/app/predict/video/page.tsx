@@ -8,7 +8,8 @@ import Button from "@/components/Button";
 import { useStore } from "@/store/useStore";
 import { useUserStore } from "@/store/userStore";
 
-const FRAME_WIDTH = 600;
+const STEP = 0.5;
+const QUALITY = 0.2;
 
 export default function VideoPredictionPage() {
   const [inputVideo, setVideo] = useState<File | null>(null);
@@ -21,8 +22,8 @@ export default function VideoPredictionPage() {
 
   const inputElementRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const resultCanvasRef = useRef<HTMLCanvasElement>(null);
   const intervalRef = useRef<NodeJS.Timeout>();
+  const showImage = useRef<HTMLImageElement>(null);
 
   const openFileDialog = () => {
     if (!inputElementRef.current) return;
@@ -47,86 +48,75 @@ export default function VideoPredictionPage() {
       !inputVideo ||
       !videoRef.current ||
       !userStore ||
-      !resultCanvasRef.current ||
-      !inputVideoUrl
+      // !resultCanvasRef.current ||
+      !inputVideoUrl ||
+      !selectedModel
     )
       return;
     setIsUploading(true);
+    const encoder = new TextEncoder()
 
     const drawCanvas = document.createElement("canvas");
     const drawContext = drawCanvas.getContext("2d");
-    const resultContext = resultCanvasRef.current.getContext("2d");
 
     const { width, height } = await getVideoDimensionsOf(inputVideoUrl);
 
-    drawCanvas.width = width;
-    drawCanvas.height = height;
+    drawCanvas.width = Math.floor(width * STEP);
+    drawCanvas.height = Math.floor(height * STEP);
 
-    resultCanvasRef.current.width = FRAME_WIDTH;
-    resultCanvasRef.current.height = FRAME_WIDTH * (height / width);
-
+    const task_name = `Video prediction on ${new Date().toLocaleDateString()}`
     const client = new WebSocket(
-      process.env.NEXT_PUBLIC_BACKEND_WS_ROOT +
-      "?access_token=" +
-      userStore.accessToken
+      `${process.env.NEXT_PUBLIC_BACKEND_WS_ROOT}/rt/${selectedModel.name}?access_token=${userStore.accessToken}&task_name=${task_name}`
     );
 
     client.addEventListener("open", () => {
-      client.send("start");
-      intervalRef.current = setInterval(
-        () => sendFrame(width, height, client, drawContext, drawCanvas),
-        100
-      );
+      client.send(encoder.encode("start"));
     });
 
     client.addEventListener("message", (ev) => {
       const dataJson = JSON.parse(ev.data);
-      displayOutput(dataJson.image as string, resultContext, width, height);
+      if (dataJson.msg) {
+        if (!videoRef.current) return;
+        intervalRef.current = setInterval(
+          () => sendFrame(client, drawContext, drawCanvas),
+          40
+        );
+        videoRef.current.play();
+      }
+      if (dataJson.img) {
+        displayOutput(dataJson.img as string);
+      }
     });
 
     videoRef.current.addEventListener("ended", () => {
+      client.send(encoder.encode("q"));
       clearInterval(intervalRef.current);
       setIsUploading(false);
     });
-    videoRef.current.play();
   };
 
   const sendFrame = (
-    width: number,
-    height: number,
     client: WebSocket,
-    drawContext: CanvasRenderingContext2D | null,
-    drawCanvas: HTMLCanvasElement
+    octx: CanvasRenderingContext2D | null,
+    oc: HTMLCanvasElement,
   ) => {
-    if (!drawContext || !resultCanvasRef.current || !videoRef.current) return;
-    drawContext.drawImage(videoRef.current, 0, 0, width, height);
-    var data = drawCanvas.toDataURL("image/jpeg", 1);
-    drawContext.clearRect(0, 0, width, height);
-    client.send(data);
+    if (!oc || !videoRef.current || !octx) return;
+    octx.drawImage(videoRef.current, 0, 0, oc.width, oc.height);
+    var dataURL = oc.toDataURL('image/jpeg', QUALITY)
+    var binary = atob(dataURL.split(',')[1]);
+    var length = binary.length;
+    var bytes = new Uint8Array(length);
+    for (var i = 0; i < length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    client.send(bytes);
   };
 
   const displayOutput = (
     imageSrc: string,
-    resultContext: CanvasRenderingContext2D | null,
-    width: number,
-    height: number
   ) => {
-    const image = new Image();
-    image.onload = () => {
-      if (!resultContext) return;
-      resultContext.drawImage(
-        image,
-        0,
-        0,
-        width,
-        height,
-        0,
-        0,
-        FRAME_WIDTH,
-        FRAME_WIDTH * (height / width)
-      );
-    };
-    image.src = imageSrc;
+    if (!showImage.current) return;
+    showImage.current.src = imageSrc;
   };
 
   return (
@@ -179,7 +169,7 @@ export default function VideoPredictionPage() {
           {isUploading && (
             <p className="font-bole text-center text-xl">is uploading...</p>
           )}
-          <canvas ref={resultCanvasRef} hidden={!isUploading}></canvas>
+          <img ref={showImage} className="w-[600px]"></img>
         </div>
       </div>
     </PredictionLayout>
