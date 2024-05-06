@@ -150,6 +150,9 @@ export default function VideoPredictionPage() {
           ref={inputElementRef}
           accept="video/*"
           hidden
+          onClick={(event) => {
+            event.currentTarget.value = ""
+          }}
           onChange={handleFileChange}
         />
         <div
