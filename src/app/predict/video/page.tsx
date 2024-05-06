@@ -9,7 +9,7 @@ import { useStore } from "@/store/useStore";
 import { useUserStore } from "@/store/userStore";
 
 const STEP = 0.5;
-const QUALITY = 0.2;
+const QUALITY = 0.8;
 
 export default function VideoPredictionPage() {
   const [inputVideo, setVideo] = useState<File | null>(null);
@@ -48,7 +48,6 @@ export default function VideoPredictionPage() {
       !inputVideo ||
       !videoRef.current ||
       !userStore ||
-      // !resultCanvasRef.current ||
       !inputVideoUrl ||
       !selectedModel
     )
@@ -90,6 +89,7 @@ export default function VideoPredictionPage() {
 
     videoRef.current.addEventListener("ended", () => {
       client.send(encoder.encode("q"));
+      client.close();
       clearInterval(intervalRef.current);
       setIsUploading(false);
     });
