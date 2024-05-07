@@ -7,6 +7,8 @@ import { useUserStore } from "@/store/userStore";
 import { Model } from "@/types/model";
 import { useEffect, useRef, useState } from "react";
 
+const QUALITY = 0.8;
+
 export default function RealtimePredictionPage() {
   const [camOpened, setCamOpened] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -17,70 +19,76 @@ export default function RealtimePredictionPage() {
     undefined
   );
 
-  const resultCanvasRef = useRef<HTMLCanvasElement>(null);
+  const encoder = new TextEncoder()
+
   const intervalRef = useRef<NodeJS.Timeout>();
+  const showImage = useRef<HTMLImageElement>(null);
+  const clientRef = useRef<WebSocket>();
+
   const userStore = useStore(useUserStore, (state) => state);
 
   useEffect(() => {
-    if (!videoStream || !resultCanvasRef.current || !userStore) return;
+    if (!videoStream || !userStore || !selectedModel) return;
+
     const settings = videoStream.getTracks()[0].getSettings();
     const width = settings.width as number;
     const height = settings.height as number;
 
     const drawCanvas = document.createElement("canvas");
     const drawContext = drawCanvas.getContext("2d");
-    const resultContext = resultCanvasRef.current.getContext("2d");
 
     drawCanvas.width = width;
     drawCanvas.height = height;
-    resultCanvasRef.current.width = width;
-    resultCanvasRef.current.height = height;
 
+    const task_name = `Webcam prediction on ${new Date().toLocaleDateString()}`
     const client = new WebSocket(
-      process.env.NEXT_PUBLIC_BACKEND_WS_ROOT +
-        "?access_token=" +
-        userStore.accessToken
+      `${process.env.NEXT_PUBLIC_BACKEND_WS_ROOT}/rt/${selectedModel.name}?access_token=${userStore.accessToken}&task_name=${task_name}`
     );
+    clientRef.current = client;
 
     client.addEventListener("open", () => {
-      client.send("start");
-      intervalRef.current = setInterval(
-        () => sendFrame(width, height, client, drawContext, drawCanvas),
-        100
-      );
+      client.send(encoder.encode("start"));
     });
 
     client.addEventListener("message", (ev) => {
       const dataJson = JSON.parse(ev.data);
-      // addNewResult({});
-      displayOutput(dataJson.image as string, resultContext);
+      if (dataJson.msg) {
+        if (!videoRef.current) return;
+        intervalRef.current = setInterval(
+          () => sendFrame(client, drawContext, drawCanvas),
+          40
+        );
+        videoRef.current.play();
+      }
+      if (dataJson.img) {
+        console.log(dataJson)
+        displayOutput(dataJson.img as string);
+      }
     });
-  }, [videoStream, userStore]);
+  }, [videoStream]);
 
   const sendFrame = (
-    width: number,
-    height: number,
     client: WebSocket,
-    drawContext: CanvasRenderingContext2D | null,
-    drawCanvas: HTMLCanvasElement
+    octx: CanvasRenderingContext2D | null,
+    oc: HTMLCanvasElement,
   ) => {
-    if (!drawContext || !resultCanvasRef.current || !videoRef.current) return;
-    drawContext.drawImage(videoRef.current, 0, 0, width, height);
-    var data = drawCanvas.toDataURL("image/jpeg", 1);
-    drawContext.clearRect(0, 0, width, height);
-    client.send(data);
+    if (!oc || !videoRef.current || !octx) return;
+    octx.drawImage(videoRef.current, 0, 0, oc.width, oc.height);
+    var dataURL = oc.toDataURL('image/jpeg', QUALITY)
+    var binary = atob(dataURL.split(',')[1]);
+    var length = binary.length;
+    var bytes = new Uint8Array(length);
+    for (var i = 0; i < length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    client.send(bytes);
   };
 
   const displayOutput = (
     imageSrc: string,
-    resultContext: CanvasRenderingContext2D | null
   ) => {
-    const image = new Image();
-    image.onload = () => {
-      if (!resultContext) return;
-      resultContext.drawImage(image, 0, 0);
-    };
-    image.src = imageSrc;
+    if (!showImage.current) return;
+    showImage.current.src = imageSrc;
   };
 
   const openCamera = async () => {
@@ -94,6 +102,11 @@ export default function RealtimePredictionPage() {
 
   const closeCamera = () => {
     if (!videoStream) return;
+    if (clientRef.current) {
+      clientRef.current.send(encoder.encode("q"));
+      clientRef.current.close();
+      clientRef.current = undefined;
+    }
     clearInterval(intervalRef.current);
     videoStream.getTracks().forEach(function (track) {
       track.stop();
@@ -123,7 +136,8 @@ export default function RealtimePredictionPage() {
               disabled={!selectedModel}
             />
           )}
-          {camOpened && <canvas ref={resultCanvasRef}></canvas>}
+          {camOpened && <img ref={showImage} className="w-[600px]"></img>
+          }
         </div>
       </div>
     </PredictionLayout>
