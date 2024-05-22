@@ -51,10 +51,39 @@ export default function RealtimePredictionPage() {
   const userStore = useStore(useUserStore, (state) => state);
   const access_token = userStore?.accessToken;
 
-  useEffect(() => {
-    if (!videoStream || !userStore || !selectedModel) return;
+  const sendFrame = (
+    client: WebSocket,
+    octx: CanvasRenderingContext2D | null,
+    oc: HTMLCanvasElement
+  ) => {
+    if (!oc || !videoRef.current || !octx) return;
+    octx.drawImage(videoRef.current, 0, 0, oc.width, oc.height);
+    var dataURL = oc.toDataURL("image/jpeg", QUALITY);
+    var binary = atob(dataURL.split(",")[1]);
+    var length = binary.length;
+    var bytes = new Uint8Array(length);
+    for (var i = 0; i < length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    client.send(bytes);
+  };
 
-    const settings = videoStream.getTracks()[0].getSettings();
+  const displayOutput = (imageSrc: string) => {
+    if (!showImage.current) return;
+    showImage.current.src = imageSrc;
+  };
+
+  const openLocalWebcam = async () => {
+    setCamOpened(true);
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    setVideoStream(stream);
+    if (!videoRef.current) return;
+    videoRef.current.srcObject = stream;
+    videoRef.current.play();
+
+    if (!userStore || !selectedModel) return;
+
+    const settings = stream.getTracks()[0].getSettings();
     const width = settings.width as number;
     const height = settings.height as number;
 
@@ -85,44 +114,12 @@ export default function RealtimePredictionPage() {
         videoRef.current.play();
       }
       if (dataJson.img) {
-        console.log(dataJson);
         displayOutput(dataJson.img as string);
       }
     });
-  }, [videoStream]);
-
-  const sendFrame = (
-    client: WebSocket,
-    octx: CanvasRenderingContext2D | null,
-    oc: HTMLCanvasElement
-  ) => {
-    if (!oc || !videoRef.current || !octx) return;
-    octx.drawImage(videoRef.current, 0, 0, oc.width, oc.height);
-    var dataURL = oc.toDataURL("image/jpeg", QUALITY);
-    var binary = atob(dataURL.split(",")[1]);
-    var length = binary.length;
-    var bytes = new Uint8Array(length);
-    for (var i = 0; i < length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    client.send(bytes);
   };
 
-  const displayOutput = (imageSrc: string) => {
-    if (!showImage.current) return;
-    showImage.current.src = imageSrc;
-  };
-
-  const openCamera = async () => {
-    setCamOpened(true);
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    setVideoStream(stream);
-    if (!videoRef.current) return;
-    videoRef.current.srcObject = stream;
-    videoRef.current.play();
-  };
-
-  const closeCamera = () => {
+  const closeLocalWebcam = () => {
     if (!videoStream) return;
     if (clientRef.current) {
       clientRef.current.send(encoder.encode("q"));
@@ -136,6 +133,36 @@ export default function RealtimePredictionPage() {
     setVideoStream(undefined);
     setCamOpened(false);
   };
+
+  const openRemoteCamera = () => {
+    setCamOpened(true);
+    if (!selectedCamera || !selectedModel || !userStore) return;
+    const task_name = `Camera prediction on ${new Date().toLocaleDateString()}`;
+    const client = new WebSocket(
+      `${process.env.NEXT_PUBLIC_BACKEND_WS_ROOT}/rt-cam/${selectedCamera.name}/${selectedModel.name}?access_token=${userStore.accessToken}&task_name=${task_name}`
+    );
+    clientRef.current = client;
+
+    client.addEventListener("open", () => {
+      client.send(encoder.encode("start"));
+    });
+
+    client.addEventListener("message", (ev) => {
+      const dataJson = JSON.parse(ev.data);
+      if (dataJson.img) {
+        displayOutput(dataJson.img as string);
+      }
+    });
+  }
+
+  const closeRemoteCamera = () => {
+    if (clientRef.current) {
+      clientRef.current.send(encoder.encode("q"));
+      clientRef.current.close();
+      clientRef.current = undefined;
+    }
+    setCamOpened(false);
+  }
 
   useEffect(() => {
     if (!access_token) return;
@@ -161,6 +188,22 @@ export default function RealtimePredictionPage() {
     getAllCameras();
   }, [access_token, userStore]);
 
+  const openCamera = () => {
+    if (selectedCamera?.name === "Local webcam") {
+      openLocalWebcam()
+    } else {
+      openRemoteCamera()
+    }
+  }
+
+  const closeCamera = () => {
+    if (selectedCamera?.name === "Local webcam") {
+      closeLocalWebcam()
+    } else {
+      closeRemoteCamera()
+    }
+  }
+
   return (
     <PredictionLayout
       inputDescriptionText="Results"
@@ -168,7 +211,7 @@ export default function RealtimePredictionPage() {
       onStopHandler={closeCamera}
       selectedModel={selectedModel}
       setSelectedModel={setSelectedModel}
-      startButtonDisabled={!selectedModel || camOpened}
+      startButtonDisabled={!selectedModel || camOpened || !selectedCamera}
       stopButtonDisabled={!camOpened}
       customDropdown={
         <Dropdown
