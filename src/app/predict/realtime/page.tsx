@@ -1,5 +1,6 @@
 "use client";
 
+import { Dropdown, Item } from "@/components/Dropdown";
 import PredictionLayout from "@/components/PredictionLayout";
 import SquareIconButton from "@/components/SquareIconButton";
 import { useStore } from "@/store/useStore";
@@ -8,6 +9,22 @@ import { Model } from "@/types/model";
 import { useEffect, useRef, useState } from "react";
 
 const QUALITY = 0.8;
+
+type Camera = {
+  name: string;
+  username: string;
+  host: string;
+  port: number;
+  path: string;
+};
+
+type GetCameraResponse = {
+  page_number: number;
+  page_size: number;
+  last_page: number;
+  count: number;
+  cameras: Camera[];
+};
 
 export default function RealtimePredictionPage() {
   const [camOpened, setCamOpened] = useState<boolean>(false);
@@ -18,14 +35,21 @@ export default function RealtimePredictionPage() {
   const [selectedModel, setSelectedModel] = useState<Model | undefined>(
     undefined
   );
+  const [listOfCameras, setListOfCameras] = useState<Item[] | undefined>(
+    undefined
+  );
+  const [selectedCamera, setSelectedCamera] = useState<Item | undefined>(
+    undefined
+  );
 
-  const encoder = new TextEncoder()
+  const encoder = new TextEncoder();
 
   const intervalRef = useRef<NodeJS.Timeout>();
   const showImage = useRef<HTMLImageElement>(null);
   const clientRef = useRef<WebSocket>();
 
   const userStore = useStore(useUserStore, (state) => state);
+  const access_token = userStore?.accessToken;
 
   useEffect(() => {
     if (!videoStream || !userStore || !selectedModel) return;
@@ -40,7 +64,7 @@ export default function RealtimePredictionPage() {
     drawCanvas.width = width;
     drawCanvas.height = height;
 
-    const task_name = `Webcam prediction on ${new Date().toLocaleDateString()}`
+    const task_name = `Webcam prediction on ${new Date().toLocaleDateString()}`;
     const client = new WebSocket(
       `${process.env.NEXT_PUBLIC_BACKEND_WS_ROOT}/rt/${selectedModel.name}?access_token=${userStore.accessToken}&task_name=${task_name}`
     );
@@ -61,7 +85,7 @@ export default function RealtimePredictionPage() {
         videoRef.current.play();
       }
       if (dataJson.img) {
-        console.log(dataJson)
+        console.log(dataJson);
         displayOutput(dataJson.img as string);
       }
     });
@@ -70,12 +94,12 @@ export default function RealtimePredictionPage() {
   const sendFrame = (
     client: WebSocket,
     octx: CanvasRenderingContext2D | null,
-    oc: HTMLCanvasElement,
+    oc: HTMLCanvasElement
   ) => {
     if (!oc || !videoRef.current || !octx) return;
     octx.drawImage(videoRef.current, 0, 0, oc.width, oc.height);
-    var dataURL = oc.toDataURL('image/jpeg', QUALITY)
-    var binary = atob(dataURL.split(',')[1]);
+    var dataURL = oc.toDataURL("image/jpeg", QUALITY);
+    var binary = atob(dataURL.split(",")[1]);
     var length = binary.length;
     var bytes = new Uint8Array(length);
     for (var i = 0; i < length; i++) {
@@ -84,9 +108,7 @@ export default function RealtimePredictionPage() {
     client.send(bytes);
   };
 
-  const displayOutput = (
-    imageSrc: string,
-  ) => {
+  const displayOutput = (imageSrc: string) => {
     if (!showImage.current) return;
     showImage.current.src = imageSrc;
   };
@@ -115,6 +137,30 @@ export default function RealtimePredictionPage() {
     setCamOpened(false);
   };
 
+  useEffect(() => {
+    if (!access_token) return;
+    const getAllCameras = async () => {
+      const getAllCamerasResult = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_ROOT}/cameras?page=1&size=26`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${access_token}`,
+          },
+        }
+      );
+      if (getAllCamerasResult.status == 401) {
+        userStore.setAccessToken("");
+        location.reload();
+        throw new Error("No session");
+      }
+      const jsonResponse: GetCameraResponse = await getAllCamerasResult.json();
+      setListOfCameras([...jsonResponse.cameras, { name: "Local webcam" }]);
+    };
+    getAllCameras();
+  }, [access_token, userStore]);
+
   return (
     <PredictionLayout
       inputDescriptionText="Results"
@@ -124,6 +170,14 @@ export default function RealtimePredictionPage() {
       setSelectedModel={setSelectedModel}
       startButtonDisabled={!selectedModel || camOpened}
       stopButtonDisabled={!camOpened}
+      customDropdown={
+        <Dropdown
+          listOfItems={listOfCameras}
+          selected={selectedCamera}
+          setSelected={setSelectedCamera}
+          label="Camera"
+        />
+      }
     >
       <div className="w-full h-full flex flex-row justify-center gap-5 items-center">
         <video ref={videoRef} hidden />
@@ -136,8 +190,7 @@ export default function RealtimePredictionPage() {
               disabled={!selectedModel}
             />
           )}
-          {camOpened && <img ref={showImage} className="w-[600px]"></img>
-          }
+          {camOpened && <img ref={showImage} className="w-[600px]"></img>}
         </div>
       </div>
     </PredictionLayout>

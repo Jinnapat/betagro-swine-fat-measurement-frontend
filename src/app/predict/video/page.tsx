@@ -131,6 +131,7 @@ export default function VideoPredictionPage() {
           text="Add video"
           handler={openFileDialog}
           colorClass="bg-blue-400"
+          disabled={isUploading}
         />
       }
     >

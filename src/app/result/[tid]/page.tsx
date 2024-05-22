@@ -154,6 +154,13 @@ function TaskInfoZone({
         </tr>
       </thead>
       <tbody>
+        {predictionResult.outputs.length == 0 &&
+          <tr className="border border-purple-600">
+            <td className="flex flex-col items-center">
+              No results found
+            </td>
+          </tr>
+        }
         {predictionResult.outputs.map((output) => (
           <tr key={output.input_file} className="border border-purple-600">
             <td className="flex flex-col items-center">
