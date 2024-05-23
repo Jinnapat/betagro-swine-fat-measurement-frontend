@@ -172,8 +172,8 @@ function TaskInfoZone({
               />
             </td>
             <td className="border border-purple-600">{output.input_file}</td>
-            <td className="border border-purple-600">{output.p1.predict}</td>
-            <td className="border border-purple-600">{output.p2.predict}</td>
+            <td className="border border-purple-600">{output.p1.predict ? output.p1.predict : "Not found"}</td>
+            <td className="border border-purple-600">{output.p2.predict ? output.p2.predict : "Not found"}</td>
           </tr>
         ))}
       </tbody>
