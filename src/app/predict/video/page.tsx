@@ -7,6 +7,7 @@ import NextImage from "next/image";
 import Button from "@/components/Button";
 import { useStore } from "@/store/useStore";
 import { useUserStore } from "@/store/userStore";
+import Image from "next/image";
 
 const STEP = 0.5;
 const QUALITY = 0.8;
@@ -18,6 +19,7 @@ export default function VideoPredictionPage() {
     undefined
   );
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const userStore = useStore(useUserStore, (state) => state);
 
   const inputElementRef = useRef<HTMLInputElement>(null);
@@ -52,8 +54,9 @@ export default function VideoPredictionPage() {
       !selectedModel
     )
       return;
+    setIsLoading(true);
     setIsUploading(true);
-    const encoder = new TextEncoder()
+    const encoder = new TextEncoder();
 
     const drawCanvas = document.createElement("canvas");
     const drawContext = drawCanvas.getContext("2d");
@@ -63,7 +66,7 @@ export default function VideoPredictionPage() {
     drawCanvas.width = Math.floor(width * STEP);
     drawCanvas.height = Math.floor(height * STEP);
 
-    const task_name = `Video prediction on ${new Date().toLocaleDateString()}`
+    const task_name = `Video prediction on ${new Date().toLocaleDateString()}`;
     const client = new WebSocket(
       `${process.env.NEXT_PUBLIC_BACKEND_WS_ROOT}/rt/${selectedModel.name}?access_token=${userStore.accessToken}&task_name=${task_name}`
     );
@@ -98,12 +101,12 @@ export default function VideoPredictionPage() {
   const sendFrame = (
     client: WebSocket,
     octx: CanvasRenderingContext2D | null,
-    oc: HTMLCanvasElement,
+    oc: HTMLCanvasElement
   ) => {
     if (!oc || !videoRef.current || !octx) return;
     octx.drawImage(videoRef.current, 0, 0, oc.width, oc.height);
-    var dataURL = oc.toDataURL('image/jpeg', QUALITY)
-    var binary = atob(dataURL.split(',')[1]);
+    var dataURL = oc.toDataURL("image/jpeg", QUALITY);
+    var binary = atob(dataURL.split(",")[1]);
     var length = binary.length;
     var bytes = new Uint8Array(length);
     for (var i = 0; i < length; i++) {
@@ -112,10 +115,9 @@ export default function VideoPredictionPage() {
     client.send(bytes);
   };
 
-  const displayOutput = (
-    imageSrc: string,
-  ) => {
+  const displayOutput = (imageSrc: string) => {
     if (!showImage.current) return;
+    setIsLoading(false);
     showImage.current.src = imageSrc;
   };
 
@@ -142,7 +144,7 @@ export default function VideoPredictionPage() {
           accept="video/*"
           hidden
           onClick={(event) => {
-            event.currentTarget.value = ""
+            event.currentTarget.value = "";
           }}
           onChange={handleFileChange}
         />
@@ -167,8 +169,14 @@ export default function VideoPredictionPage() {
           )}
         </div>
         <div className="flex flex-col items-center">
-          {isUploading && (
-            <p className="font-bole text-center text-xl">is uploading...</p>
+          {isLoading && (
+            <Image
+              src="/loading.png"
+              width={80}
+              height={80}
+              alt="loading"
+              className="absolute z-10 animate-spin"
+            />
           )}
           <img ref={showImage} className="w-[600px]"></img>
         </div>
