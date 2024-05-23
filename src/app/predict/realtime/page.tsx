@@ -7,6 +7,7 @@ import { useStore } from "@/store/useStore";
 import { useUserStore } from "@/store/userStore";
 import { Model } from "@/types/model";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 const QUALITY = 0.8;
 
@@ -27,6 +28,7 @@ type GetCameraResponse = {
 };
 
 export default function RealtimePredictionPage() {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [camOpened, setCamOpened] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoStream, setVideoStream] = useState<MediaStream | undefined>(
@@ -69,6 +71,7 @@ export default function RealtimePredictionPage() {
   };
 
   const displayOutput = (imageSrc: string) => {
+    setIsLoading(false);
     if (!showImage.current) return;
     showImage.current.src = imageSrc;
   };
@@ -189,6 +192,7 @@ export default function RealtimePredictionPage() {
   }, [access_token, userStore]);
 
   const openCamera = () => {
+    setIsLoading(true);
     if (selectedCamera?.name === "Local webcam") {
       openLocalWebcam();
     } else {
@@ -233,7 +237,18 @@ export default function RealtimePredictionPage() {
               disabled={!selectedModel}
             />
           )}
-          {camOpened && <img ref={showImage} className="w-[600px]"></img>}
+          {camOpened && isLoading && (
+            <Image
+              src="/loading.png"
+              width={80}
+              height={80}
+              alt="loading"
+              className="absolute z-10 animate-spin"
+            />
+          )}
+          {camOpened && !isLoading && (
+            <img ref={showImage} className="w-[600px]"></img>
+          )}
         </div>
       </div>
     </PredictionLayout>
