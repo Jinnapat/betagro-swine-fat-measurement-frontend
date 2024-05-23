@@ -79,6 +79,7 @@ export default function VideoPredictionPage() {
       const dataJson = JSON.parse(ev.data);
       if (dataJson.msg) {
         if (!videoRef.current) return;
+        videoRef.current.currentTime = 0.0;
         intervalRef.current = setInterval(
           () => sendFrame(client, drawContext, drawCanvas),
           40
@@ -94,7 +95,6 @@ export default function VideoPredictionPage() {
       client.send(encoder.encode("q"));
       client.close();
       clearInterval(intervalRef.current);
-      setIsUploading(false);
     });
   };
 
