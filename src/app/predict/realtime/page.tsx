@@ -57,7 +57,7 @@ export default function RealtimePredictionPage() {
     oc: HTMLCanvasElement
   ) => {
     if (!oc || !videoRef.current || !octx) return;
-    octx.drawImage(videoRef.current, 0, 0, oc.width, oc.height);
+    octx.drawImage(videoRef.current, 0, 0, 972, 1296);
     var dataURL = oc.toDataURL("image/jpeg", QUALITY);
     var binary = atob(dataURL.split(",")[1]);
     var length = binary.length;
@@ -84,8 +84,8 @@ export default function RealtimePredictionPage() {
     if (!userStore || !selectedModel) return;
 
     const settings = stream.getTracks()[0].getSettings();
-    const width = settings.width as number;
-    const height = settings.height as number;
+    const width = 972;
+    const height = 1296;
 
     const drawCanvas = document.createElement("canvas");
     const drawContext = drawCanvas.getContext("2d");
@@ -153,7 +153,7 @@ export default function RealtimePredictionPage() {
         displayOutput(dataJson.img as string);
       }
     });
-  }
+  };
 
   const closeRemoteCamera = () => {
     if (clientRef.current) {
@@ -162,7 +162,7 @@ export default function RealtimePredictionPage() {
       clientRef.current = undefined;
     }
     setCamOpened(false);
-  }
+  };
 
   useEffect(() => {
     if (!access_token) return;
@@ -190,19 +190,19 @@ export default function RealtimePredictionPage() {
 
   const openCamera = () => {
     if (selectedCamera?.name === "Local webcam") {
-      openLocalWebcam()
+      openLocalWebcam();
     } else {
-      openRemoteCamera()
+      openRemoteCamera();
     }
-  }
+  };
 
   const closeCamera = () => {
     if (selectedCamera?.name === "Local webcam") {
-      closeLocalWebcam()
+      closeLocalWebcam();
     } else {
-      closeRemoteCamera()
+      closeRemoteCamera();
     }
-  }
+  };
 
   return (
     <PredictionLayout
